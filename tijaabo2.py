@@ -23,15 +23,20 @@ class OpenGLGroViewer(QMainWindow):
         
         self.load_and_render_gro()
 
-    def get_colors_by_resname(self, resnames):
-        """Assign colors based on residue names."""
+    def get_colors_by_atom_type(self, names):
+        """Assign colors based on atom element types (extracted from atom names)."""
         color_map = {
-            'O': (0, 0.6, 1, 1),    # Blue for DPPC
-            'C': (0.6, 1, 0.2, 1),  # Green for PIM2
-            'H': (1, 0.3, 0.3, 1),   # Red for TAP
+            # Standard CPK coloring scheme (VMD-style)
+            'O': (1.0, 0.0, 0.0, 1),    # Red for Oxygen
+            'C': (0.2, 0.2, 0.2, 1),    # Dark Gray for Carbon
+            'H': (1.0, 1.0, 1.0, 1),    # White for Hydrogen
+            'N': (0.0, 0.0, 1.0, 1),    # Blue for Nitrogen
+            'P': (1.0, 0.5, 0.0, 1),    # Orange for Phosphorus
+            'S': (1.0, 1.0, 0.0, 1),    # Yellow for Sulfur
         }
-        # Default color (gray) for residues not in the map
-        return [color_map.get(res, (0.8, 0.8, 0.8, 1)) for res in resnames]
+        # Extract the first character (assumed to be the element) from atom names
+        elements = [name[0] if isinstance(name, str) else 'X' for name in names]
+        return [color_map.get(elem, (0.8, 0.8, 0.8, 1)) for elem in elements]  # Gray for unknown
 
     def load_and_render_gro(self):
         try:
@@ -47,9 +52,8 @@ class OpenGLGroViewer(QMainWindow):
             print(f"Atoms loaded: {len(u.atoms)}")
             
             positions = u.atoms.positions - u.atoms.positions.mean(axis=0)
-            resnames = u.atoms.resnames
-            names = u.atoms.names
-            colors = self.get_colors_by_resname(resnames)
+            names = u.atoms.names  # Atom names (e.g., 'OW', 'C1', 'H2')
+            colors = self.get_colors_by_atom_type(names)  # Color by atom type
 
             # Render atoms
             for i, pos in enumerate(positions):
